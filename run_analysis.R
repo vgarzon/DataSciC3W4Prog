@@ -1,11 +1,11 @@
 # Coursera JHU "Getting and Cleaning Data" 
 # Week 4 Programming Assignment
 # Victor Garzon
-# 2016-01-26
+# 2016-01-27
 
-# Load packages dplyr and reshape2
+# Load packages tidyr and dplyr
+library(tidyr)
 library(dplyr)
-library(reshape2)
 
 # Data foler name
 dat_dir <- "./UCI HAR Dataset/"
@@ -61,18 +61,16 @@ dfm_tst_ids <- data.frame(subject = sbj_tst_fac, activity = lbl_tst_fac)
 dfm_trn <- cbind(dfm_trn_ids, dfm_trn)
 dfm_tst <- cbind(dfm_tst_ids, dfm_tst)
 
-# Combine train and test data frames into one
-dfm <- rbind(dfm_trn, dfm_tst)
+# Combine train and test data frames into a tbl_df
+dfm <- tbl_df(rbind(dfm_trn, dfm_tst))
 
-# Melt data frame by subject and activity
-dfm_mel <- melt(dfm, id.vars = c("subject", "activity"))
-
+# Melt data frame by subject and activity, preserve order
 # Group melted data by subject, activity and variable
-dfm_grp <- group_by(dfm_mel, subject, activity, variable)
-
 # Summarize mean and standard deviation for each group
-dfm_smr <- summarize(dfm_grp, mean = mean(value), sd = sd(value))
+dfm_smr <- gather(dfm, variable, value, -(subject:activity), 
+                  factor_key = TRUE) %>% 
+        group_by(subject, activity, variable) %>% 
+        summarize(mean = mean(value), sd = sd(value))
 
 # Write summary data to file
 write.table(dfm_smr, "UCI_HAR_combined_summary.txt", row.names = FALSE)
-
